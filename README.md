@@ -9,15 +9,18 @@ This document will guide you in installing and configuring all the required pack
 
 ## 0. Table of contents
 
-1. [Prerequisites](#1.-prerequisites)
-2. Architecture
-3. Provisioning the monitoring server
-    1. Adding the upstream repositories
-    2. Installing packages
-    3. Configuring Grafana
-    4. Configuring Grafana
-4. Provisioning the target nodes
-    1. Adding the upstream repositories
+1. [Prerequisites](#1-prerequisites)
+2. [Architecture](#2-architecture)
+3. [Provisioning the monitoring server](#3-provisioning-the-monitoring-server)
+    1. [Adding the upstream repositories](#31-adding-the-upstream-repository)
+    2. [Installing packages](#32-installing-packages)
+    3. [Configuring Prometheus](#33-configuring-prometheus)
+    4. [Configuring Grafana](#34-configuring-grafana)
+    5. [Configuring Loki](#35-configuring-loki)
+    6. [Enabling and starting the services](#36-enabling-and-starting-the-services)
+4. [Provisioning the target nodes](#4-provisioning-the-target-nodes)
+    1. [Adding the upstream repositories](#41-adding-the-upstream-repository)
+    2. [Installing packages](#42-installing-packages)
 
 
 ## 1. Prerequisites
@@ -65,7 +68,7 @@ zypper install golang-github-prometheus-prometheus \
 ```
 
 
-### 3.4. Configuring Prometheus
+### 3.3. Configuring Prometheus
 
 TBD
 
@@ -75,7 +78,7 @@ TBD
 TBD
 
 
-### 3.4. Configuring Loki
+### 3.5. Configuring Loki
 
 TBD
 
@@ -91,19 +94,19 @@ systemctl enable --now prometheus grafana-server loki
 
 ### 4.1. Adding the upstream repository
 
-Please refer to step [3.1.](#3-1-adding-the-upstream-repository)
+See step [3.1.](#31-adding-the-upstream-repository)
 
 
 ### 4.2. Installing packages
 
-The packages providing `node_exporter` and `promtail` are needed in all the target nodes:
+The packages providing `node_exporter` and `promtail` are needed in all the _target nodes_:
 
 ```
 zypper install golang-github-prometheus-node_exporter \
                loki
 ```
 
-Furthermore, you should install the relevant exporters, depending the workload each node is dedicated to.
+Furthermore, you should install the relevant exporters, depending on the workload each node is dedicated to.
 
 For Pacemaker HA cluster member nodes:
 ```
@@ -120,3 +123,7 @@ For NetWeaver or S4/HANA nodes:
 zypper install prometheus-sap_host_exporter
 ```
 
+Note: for some workloads, a combination of multiple of the above options might be appropriate, e.g. Highly Available HANA or Highly Available Enqueue Replication Server.
+
+
+### 4.3 Configuring 
