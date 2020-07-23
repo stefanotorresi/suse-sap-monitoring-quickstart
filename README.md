@@ -21,6 +21,7 @@ This document will guide you in installing and configuring all the required pack
 4. [Provisioning the target nodes](#4-provisioning-the-target-nodes)
     1. [Adding the upstream repositories](#41-adding-the-upstream-repository)
     2. [Installing packages](#42-installing-packages)
+    3. [Configuring the exporters](#43-configuring-the-exporters)
 
 
 ## 1. Prerequisites
@@ -126,4 +127,6 @@ zypper install prometheus-sap_host_exporter
 Note: for some workloads, a combination of multiple of the above options might be appropriate, e.g. Highly Available HANA or Highly Available Enqueue Replication Server.
 
 
-### 4.3 Configuring 
+### 4.3 Configuring the exporters
+
+TBD
