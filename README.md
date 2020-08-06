@@ -53,20 +53,34 @@ Once you have a new _SUSE Linux Enterprise for SAP Applications_ node in place, 
 
 ### 3.1. Adding the upstream repository
 
+Some of the packages required to configure the solution are not yet delivered in official SLES channels, so - for demonstration purposes - we will use the latest development codestream.
+
+Please browse the [`network:ha-clustering:sap-deployments:devel`](https://download.opensuse.org/repositories/network:/ha-clustering:/sap-deployments:/devel/) and select the distribution version that is most relevant to you.  
+Copy the link to the `.repo` file, and use it as shown below (the example uses `SLE_15_SP2`):
+
 ```
-export SLE_VERSION=SLE_15_SP2 # set according to your environment
-zypper add-repo https://download.opensuse.org/repositories/network:/ha-clustering:/sap-deployments:/devel/$SLE_VERSION/network:ha-clustering:sap-deployments:devel.repo
+zypper add-repo -f https://download.opensuse.org/repositories/network:/ha-clustering:/sap-deployments:/devel/SLE_15_SP2/network:ha-clustering:sap-deployments:devel.repo
+```
+
+Don't forget to refresh the repos! 😉
+```
+zypper --gpg-auto-import-keys refresh
 ```
 
 
 ### 3.2. Installing packages
 
+These are the services we're going to run in the _monitoring server_.
+
 ```
 zypper install golang-github-prometheus-prometheus \
                golang-github-prometheus-alertmanager \
+               golang-github-prometheus-node_exporter \
                grafana \
                loki
 ```
+
+Please note that, in a production environemnt, you'll probably want to distribute these, depending on the volume of your workloads.
 
 
 ### 3.3. Configuring Prometheus
