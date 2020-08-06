@@ -85,8 +85,40 @@ Please note that, in a production environment, you'll probably want to distribut
 
 ### 3.3. Configuring Prometheus
 
-TBD
+We'll want to change the Prometheus "jobs" configuration and deviate a little from the defaults. 
 
+We will group each set of exporters by destination of use.
+
+In the example below, we have a `monitoring` job which targets the exporters running in the monitoring host itself, and a `hana` job, which targets two SAP HANA nodes in a active/passive HA deployment:
+
+```yaml
+scrape_configs:
+- job_name: "monitoring"
+  static_configs:
+  - targets:
+    - "localhost:9090" # Prometheus self monitoring
+    - "localhost:9100" # node_exporter
+
+- job_name: 'hana':
+  static_configs:
+  - targets: 
+    - "$HANA_NODE_1_IP:9100" # node_exporter
+    - "$HANA_NODE_1_IP:9664" # ha_cluster_exporter
+    - "$HANA_NODE_2_IP:9100" # node_exporter
+    - "$HANA_NODE_2_IP:9664" # ha_cluster_exporter
+    - "$HANA_FLOATING_IP:9668" # hanadb_exporter
+```
+
+Of course, you must change the `$HANA_NODE_1_IP`, `$HANA_NODE_2_IP` and `$HANA_FLOATING_IP` example markers according to your existing environment.
+
+Please note that, in HA deployments, you will only have one `hanadb_exporter` instance (port 9668 by default), targeted at the current active node. If you don't have a HA deployment, you can just target the only present node, e.g.:
+
+```yaml
+  - targets: 
+    - "$HANA_NODE_IP:9100" # node_exporter
+    - "$HANA_NODE_IP:9664" # ha_cluster_exporter
+    - "$HANA_NODE_IP:9668" # hanadb_exporter
+```
 
 ### 3.4. Configuring Grafana
 
