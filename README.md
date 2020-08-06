@@ -80,7 +80,7 @@ zypper install golang-github-prometheus-prometheus \
                loki
 ```
 
-Please note that, in a production environemnt, you'll probably want to distribute these, depending on the volume of your workloads.
+Please note that, in a production environment, you'll probably want to distribute the Prometheus, Loki and Grafana services across multiple hosts, depending on the volume of your workloads (future versions of this guide may explain how to do so by deploying the monitoring stack in a Kubernetes cluster - ed.).
 
 
 ### 3.3. Configuring Prometheus
