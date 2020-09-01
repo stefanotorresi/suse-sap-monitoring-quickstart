@@ -122,12 +122,14 @@ Please note that, in HA deployments, you will only have one `hanadb_exporter` in
 
 ### 3.4. Configuring Grafana
 
-TBD
+A sample configuration file is provided at `/etc/grafana/grafana.ini`. Default values will work OOTB.
 
 
 ### 3.5. Configuring Loki
 
-TBD
+A sample configuration file is provided at `/etc/loki/loki.yaml`.
+
+Please note that the default configuration will use local filesystem storage, which is only suitable for small workloads.
 
 
 ### 3.6. Enabling and starting the services
@@ -135,6 +137,8 @@ TBD
 ```
 systemctl enable --now prometheus grafana-server loki
 ```
+
+The first time you'll browse Grafana's web UI at `http://$MONITORING_SERVER_IP:3000`, you'll be asked to create an adminstrator user.
 
 
 ## 4. Provisioning the _target nodes_
