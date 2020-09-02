@@ -124,6 +124,28 @@ Please note that, in HA deployments, you will only have one `hanadb_exporter` in
 
 A sample configuration file is provided at `/etc/grafana/grafana.ini`. Default values will work OOTB.
 
+Datasources must be added to let Grafana query the underlying Prometheus and Loki servers.
+Here is an example to be put in  `/etc/grafana/provisioning/datasources/datasources.yml`.
+
+```yaml
+apiVersion: 1
+
+datasources:
+- name: Prometheus
+  type: prometheus
+  access: proxy
+  url: http://$MONITORING_SERVER_IP:9090
+  isDefault: True
+
+- name: Loki
+  type: loki
+  access: proxy
+  url: http://localhost:3100
+```
+
+Note that, in the example above, we use the public monitoring server ip to access Prometheus; this is done to let Grafana correctly expose hyperlinks to the Prometheus query debug panel.
+
+Alternatively, you can add datasources manually from the web GUI.
 
 ### 3.5. Configuring Loki
 
