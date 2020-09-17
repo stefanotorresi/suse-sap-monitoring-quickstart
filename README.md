@@ -2,12 +2,17 @@
 
 The SHAP Monitoring Solution aims at bringing a modern open-source stack to monitor SAP systems.
 
-It is based on a few notable free open-source projects: [Prometheus](http://prometheus.io), [Grafana](http://grafana.com/oss/grafana) and [Loki](http://grafana.com/oss/loki).
+It is based on a few notable free open-source projects: 
+
+- [Prometheus](http://prometheus.io), a monitoring system and time series database.
+- [Grafana](http://grafana.com/oss/grafana), a GUI platform for monitoring and observability.
+- [Loki](http://grafana.com/oss/loki), a log aggregation system.
 
 This document will guide you in installing and configuring all the required packages and start monitoring an existing SAP cluster.
 
 
-## 0. Table of contents
+
+## Table of contents
 
 1. [Prerequisites](#1-prerequisites)
 2. [Architecture](#2-architecture)
@@ -26,36 +31,36 @@ This document will guide you in installing and configuring all the required pack
 
 ## 1. Prerequisites
 
-Throughout the rest of this document, it is assumed the following: 
+This document assumes the following conditions: 
 
-- You have some SAP system in place already. Installing and configuring SAP HANA, SAP NetWeaver or SAP S4/HANA will not be covered by this guide;
-- You can create a new node in the network topology of the existing cluster.
-- All the nodes are running _SUSE Linux Enterprise for SAP Applications_, version 12SP3 or later.
+- You have some SAP system in place already. Installing and configuring SAP HANA, SAP NetWeaver or SAP S4/HANA will not be covered by this guide; for this exact purpose, you can refer to our [SAP Automation](https://documentation.suse.com/sles-sap/15-SP2/single-html/SLES-SAP-sol-automation/).
+- You can create a new node in the network topology of the existing cluster;
+- All the nodes are running _SUSE Linux Enterprise for SAP Applications_, version 12SP3 or later;
 - You have full root access to all the nodes;
 - You have access to the network configuration of the cluster.
 
-**Disclaimer**: Please, do not attempt to execute this guide on a live production system.
+**Disclaimer**: Do not attempt to execute this guide directly on a live production system!
 
 
-## 2. Architecture
+## 2. Architecture and Terminology
 
 Introducing monitoring in an existing system requires provisioning an additional node to host the monitoring services; we'll refer to this node as the _monitoring server_ from now on.
 
 The existing nodes you wish to monitor will be referred as _target nodes_ instead.
 
-The _monitoring server_ will both listen for connections and perform connections towards the _target nodes_, so inbound and outbound network traffic will be needed between the _monitoring server_ and all the _target nodes_.
+The _monitoring server_ both listens for and performs connections towards the _target nodes_. Inbound and outbound network traffic is needed between the _monitoring server_ and all the _target nodes_.
 
 
-## 3. Provisioning the _monitoring server_
+## 3. Provisioning the _Monitoring Server_
 
-Once you have a new _SUSE Linux Enterprise for SAP Applications_ node in place, note down it's publicly accessible IP address; we'll refer to this as `$MONITORING_SERVER_IP` throughout the rest of the document.
+Once you have a new _SUSE Linux Enterprise for SAP Applications_ node in place, write down its publicly accessible IP address. We'll refer to this IP as `$MONITORING_SERVER_IP` throughout the rest of this document.
 
 
 ### 3.1. Adding the upstream repository
 
 Some of the packages required to configure the solution are not yet delivered in official SLES channels, so - for demonstration purposes - we will use the latest development codestream.
 
-Please browse the [`network:ha-clustering:sap-deployments:devel`](https://download.opensuse.org/repositories/network:/ha-clustering:/sap-deployments:/devel/) and select the distribution version that is most relevant to you.  
+Browse the [`network:ha-clustering:sap-deployments:devel`](https://download.opensuse.org/repositories/network:/ha-clustering:/sap-deployments:/devel/) and select the distribution version that is most relevant to you.  
 Copy the link to the `.repo` file, and use it as shown below (the example uses `SLE_15_SP2`):
 
 ```
@@ -68,9 +73,9 @@ zypper --gpg-auto-import-keys refresh
 ```
 
 
-### 3.2. Installing packages
+### 3.2. Installing Packages
 
-These are the services we're going to run in the _monitoring server_.
+Install the following packages on the _monitoring server_:
 
 ```
 zypper install golang-github-prometheus-prometheus \
@@ -80,16 +85,19 @@ zypper install golang-github-prometheus-prometheus \
                loki
 ```
 
-Please note that, in a production environment, you'll probably want to distribute the Prometheus, Loki and Grafana services across multiple hosts, depending on the volume of your workloads (future versions of this guide may explain how to do so by deploying the monitoring stack in a Kubernetes cluster - ed.).
+In a production environment, you probably want to distribute the Prometheus, Loki and Grafana services across multiple hosts, depending on the volume of your workloads. (Future versions of this guide may explain how to do so by deploying the monitoring stack in a Kubernetes cluster - ed.).
 
 
 ### 3.3. Configuring Prometheus
 
 We'll want to change the Prometheus "jobs" configuration and deviate a little from the defaults. 
 
-We will group each set of exporters by destination of use.
+We group each set of exporters by destination of use.
 
-In the example below, we have a `monitoring` job which targets the exporters running in the monitoring host itself, and a `hana` job, which targets two SAP HANA nodes in a active/passive HA deployment:
+In the YAML example below, we have a `monitoring` job which targets the exporters running in the monitoring host itself. Additionally, we have a `hana` job, which targets two SAP HANA nodes in a active/passive HA deployment:
+
+<details>
+<summary>/etc/prometheus/prometheus.yaml</summary>
 
 ```yaml
 scrape_configs:
@@ -108,10 +116,11 @@ scrape_configs:
     - "$HANA_NODE_2_IP:9664" # ha_cluster_exporter
     - "$HANA_FLOATING_IP:9668" # hanadb_exporter
 ```
+</details>
 
-Of course, you must change the `$HANA_NODE_1_IP`, `$HANA_NODE_2_IP` and `$HANA_FLOATING_IP` example markers according to your existing environment.
+Of course, you must change the `$HANA_NODE_1_IP`, `$HANA_NODE_2_IP` and `$HANA_FLOATING_IP` example variables according to your existing environment.
 
-Please note that, in HA deployments, you will only have one `hanadb_exporter` instance (port 9668 by default), targeted at the current active node. If you don't have a HA deployment, you can just target the only present node, e.g.:
+Note that in HA deployments, you only have one `hanadb_exporter` instance (port 9668 by default), targeted at the current active node. If you do not have a HA deployment, you can target the only present node, for example:
 
 ```yaml
   - targets: 
@@ -122,10 +131,13 @@ Please note that, in HA deployments, you will only have one `hanadb_exporter` in
 
 ### 3.4. Configuring Grafana
 
-A sample configuration file is provided at `/etc/grafana/grafana.ini`. Default values will work OOTB.
+A sample configuration file is provided at `/etc/grafana/grafana.ini`. Default values works without changes.
 
-Datasources must be added to let Grafana query the underlying Prometheus and Loki servers.
-Here is an example to be put in  `/etc/grafana/provisioning/datasources/datasources.yml`.
+Data sources must be added to let Grafana query the underlying Prometheus and Loki servers:
+
+The following example uses the public monitoring server IP to access Prometheus. This is done to let Grafana correctly expose hyperlinks to the Prometheus query debug panel:
+
+<details><summary>/etc/grafana/provisioning/datasources/datasources.yml</summary>
 
 ```yaml
 apiVersion: 1
@@ -142,16 +154,15 @@ datasources:
   access: proxy
   url: http://localhost:3100
 ```
+</details>
 
-Note that, in the example above, we use the public monitoring server ip to access Prometheus; this is done to let Grafana correctly expose hyperlinks to the Prometheus query debug panel.
-
-Alternatively, you can add datasources manually from the web GUI.
+Alternatively, you can add data sources manually from the web GUI.
 
 ### 3.5. Configuring Loki
 
 A sample configuration file is provided at `/etc/loki/loki.yaml`.
 
-Please note that the default configuration will use local filesystem storage, which is only suitable for small workloads.
+The default configuration uses the local filesystem storage, which is only suitable for small workloads.
 
 
 ### 3.6. Enabling and starting the services
@@ -160,19 +171,20 @@ Please note that the default configuration will use local filesystem storage, wh
 systemctl enable --now prometheus grafana-server loki
 ```
 
-The first time you'll browse Grafana's web UI at `http://$MONITORING_SERVER_IP:3000`, you'll be asked to create an adminstrator user.
+The first time browse Grafana's web UI at `http://$MONITORING_SERVER_IP:3000`, you are asked to create an adminstrator user.
 
 
-## 4. Provisioning the _target nodes_
+## 4. Provisioning the _Target Nodes_
 
-### 4.1. Adding the upstream repository
+### 4.1. Adding the Upstream Repository
 
 See step [3.1.](#31-adding-the-upstream-repository)
 
 
-### 4.2. Installing packages
+### 4.2. Installing Packages
 
-The packages providing `node_exporter` and `promtail` are needed in all the _target nodes_:
+The packages providing `node_exporter` and `promtail` are needed in all the _target nodes_.
+Install them with:
 
 ```
 zypper install golang-github-prometheus-node_exporter \
@@ -196,9 +208,9 @@ For NetWeaver or S4/HANA nodes:
 zypper install prometheus-sap_host_exporter
 ```
 
-Note: for some workloads, a combination of multiple of the above options might be appropriate, e.g. Highly Available HANA or Highly Available Enqueue Replication Server.
+Note: for some workloads, a combination of multiple of the above options might be appropriate, for example, Highly Available HANA or Highly Available Enqueue Replication Server.
 
 
-### 4.3 Configuring the exporters
+### 4.3 Configuring the Exporters
 
 TBD
