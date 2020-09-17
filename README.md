@@ -97,7 +97,7 @@ We group each set of exporters by destination of use.
 In the YAML example below, we have a `monitoring` job which targets the exporters running in the monitoring host itself. Additionally, we have a `hana` job, which targets two SAP HANA nodes in a active/passive HA deployment:
 
 <details>
-<summary>/etc/prometheus/prometheus.yaml</summary>
+<summary><code>/etc/prometheus/prometheus.yaml</code></summary>
 
 ```yaml
 scrape_configs:
@@ -137,7 +137,7 @@ Data sources must be added to let Grafana query the underlying Prometheus and Lo
 
 The following example uses the public monitoring server IP to access Prometheus. This is done to let Grafana correctly expose hyperlinks to the Prometheus query debug panel:
 
-<details><summary>/etc/grafana/provisioning/datasources/datasources.yml</summary>
+<details><summary><code>/etc/grafana/provisioning/datasources/datasources.yml</code></summary>
 
 ```yaml
 apiVersion: 1
